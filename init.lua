@@ -319,7 +319,7 @@ require('lazy').setup({
         { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>w', group = '[W]orkspace' },
-        { '<leader>t', group = '[T]oggle' },
+        { '<leader>t', group = '[T]oggle & [T]est' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
@@ -614,9 +614,6 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -626,20 +623,43 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
-
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
-          -- capabilities = {},
+          capabilities = capabilities,
           settings = {
             Lua = {
               completion = {
                 callSnippet = 'Replace',
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
+              diagnostics = { disable = { 'missing-fields' } },
             },
           },
+        },
+        ast_grep = {
+          capabilities = capabilities,
+        },
+        marksman = {
+          capabilities = capabilities,
+        },
+        jdtls = {
+          capabilities = capabilities,
+        },
+        bashls = {
+          capabilities = capabilities,
+        },
+        cmake = {
+          capabilities = capabilities,
+        },
+        clangd = {
+          capabilities = capabilities,
+        },
+        gopls = {
+          capabilities = capabilities,
+        },
+        pyright = {
+          capabilities = capabilities,
         },
       }
 
@@ -656,6 +676,8 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'isort', -- Used to format python code
+        'black', -- Used to format python code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -709,10 +731,16 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort', 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+
+        c = { 'astyle', 'codespell', stop_after_first = true },
+
+        java = { 'astyle', 'codespell', stop_after_first = true },
+
+        --markdown = { 'astyle', 'codespell', stop_after_first = true },
       },
     },
   },
@@ -737,12 +765,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -965,6 +993,9 @@ require('lazy').setup({
     --},
   },
 })
+
+require('dap-python').setup 'python3'
+require('dap-python').test_runner = 'pytest'
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

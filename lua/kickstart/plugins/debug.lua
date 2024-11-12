@@ -23,6 +23,7 @@ return {
 
     -- Add your own debuggers here
     'leoluz/nvim-dap-go',
+    'mfussenegger/nvim-dap-python',
   },
   keys = function(_, keys)
     local dap = require 'dap'
@@ -43,6 +44,7 @@ return {
       },
       -- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
       { '<F7>', dapui.toggle, desc = 'Debug: See last session result.' },
+
       unpack(keys),
     }
   end,
@@ -64,6 +66,7 @@ return {
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'debugpy',
       },
     }
 
@@ -113,5 +116,18 @@ return {
         detached = vim.fn.has 'win32' == 0,
       },
     }
+
+    -- Install python specific config
+    local dappython = require 'dap-python'
+
+    vim.keymap.set('n', '<Leader>,mm', function()
+      dappython.test_method()
+    end, {})
+    vim.keymap.set('n', '<Leader>,mc', function()
+      dappython.test_class()
+    end, {})
+    vim.keymap.set('', '<Leader>,ms', function()
+      dappython.test_selection()
+    end, {})
   end,
 }
