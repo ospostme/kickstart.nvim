@@ -25,25 +25,33 @@ return {
     'leoluz/nvim-dap-go',
     'mfussenegger/nvim-dap-python',
   },
+
+  log_level = vim.log.levels.DEBUG,
+
   keys = function(_, keys)
     local dap = require 'dap'
     local dapui = require 'dapui'
     return {
       -- Basic debugging keymaps, feel free to change to your liking!
-      { '<F5>', dap.continue, desc = 'Debug: Start/Continue' },
-      { '<F1>', dap.step_into, desc = 'Debug: Step Into' },
-      { '<F2>', dap.step_over, desc = 'Debug: Step Over' },
-      { '<F3>', dap.step_out, desc = 'Debug: Step Out' },
-      { '<leader>b', dap.toggle_breakpoint, desc = 'Debug: Toggle Breakpoint' },
+      --{ '<F5>', dap.continue, desc = 'Debug: Start/Continue' },
+      --{ '<F1>', dap.step_into, desc = 'Debug: Step Into' },
+      --{ '<F2>', dap.step_over, desc = 'Debug: Step Over' },
+      --{ '<F3>', dap.step_out, desc = 'Debug: Step Out' },
+      { '\\c', dap.continue, desc = 'Debug: Start/[C]ontinue' },
+      { '\\g', dap.step_into, desc = 'Debug: Step Into/[G]o Into' },
+      { '\\v', dap.step_over, desc = 'Debug: Step [O]ver' },
+      { '\\w', dap.step_out, desc = 'Debug: Step Out/[W]alk out' },
+      { '<leader>b', dap.toggle_breakpoint, desc = 'Debug: Toggle [b]reakpoint' },
       {
         '<leader>B',
         function()
           dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
         end,
-        desc = 'Debug: Set Breakpoint',
+        desc = 'Debug: Set [B]reakpoint',
       },
       -- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
-      { '<F7>', dapui.toggle, desc = 'Debug: See last session result.' },
+      --{ '<F7>', dapui.toggle, desc = 'Debug: See last session result.' },
+      { '\\r', dapui.toggle, desc = 'Debug: See last session [R]esult.' },
 
       unpack(keys),
     }
@@ -67,6 +75,8 @@ return {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
         'debugpy',
+        'java-debug-adpter',
+        'codelldb',
       },
     }
 
@@ -120,14 +130,14 @@ return {
     -- Install python specific config
     local dappython = require 'dap-python'
 
-    vim.keymap.set('n', '<Leader>,mm', function()
+    vim.keymap.set('n', '<Leader>tm', function()
       dappython.test_method()
-    end, {})
-    vim.keymap.set('n', '<Leader>,mc', function()
+    end, { desc = '[T]est [M]ethod (python)' })
+    vim.keymap.set('n', '<Leader>tc', function()
       dappython.test_class()
-    end, {})
-    vim.keymap.set('', '<Leader>,ms', function()
+    end, { desc = '[T]est [C]lass (python)' })
+    vim.keymap.set('', '<Leader>tS', function()
       dappython.test_selection()
-    end, {})
+    end, { desc = '[T]est [S]election (python)' })
   end,
 }

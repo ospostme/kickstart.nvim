@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -466,6 +466,8 @@ require('lazy').setup({
 
       -- Allows extra capabilities provided by nvim-cmp
       'hrsh7th/cmp-nvim-lsp',
+
+      { 'nvim-java/nvim-java' },
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -497,6 +499,9 @@ require('lazy').setup({
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
+      --
+      vim.lsp.set_log_level 'debug'
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -547,12 +552,18 @@ require('lazy').setup({
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
+          --if client then
+          -- local utils = require 'utils'
+          --utils.notify(string.format('[SERVER] %s\n[CWD] %s', client.name, vim.loop.cwd()), 'info', { title = '[LSP] active' }, true)
+          --end
+
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+
           if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
@@ -589,13 +600,13 @@ require('lazy').setup({
       })
 
       -- Change diagnostic symbols in the sign column (gutter)
-      -- if vim.g.have_nerd_font then
-      --   local signs = { Error = '', Warn = '', Hint = '', Info = '' }
-      --   for type, icon in pairs(signs) do
-      --     local hl = 'DiagnosticSign' .. type
-      --     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-      --   end
-      -- end
+      if vim.g.have_nerd_font then
+        local signs = { Error = '', Warn = '', Hint = '', Info = '' }
+        for type, icon in pairs(signs) do
+          local hl = 'DiagnosticSign' .. type
+          vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+        end
+      end
 
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
@@ -633,13 +644,17 @@ require('lazy').setup({
                 callSnippet = 'Replace',
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              diagnostics = { disable = { 'missing-fields' } },
+              diagnostics = {
+                disable = { 'missing-fields' },
+              },
             },
           },
         },
-        ast_grep = {
-          capabilities = capabilities,
-        },
+        -- ast-grep(sg) is a fast and polyglot tool for code structural search, lint, rewriting at large scale.
+        -- ast-grep LSP only works in projects that have sgconfig.y[a]ml in their root directories.
+        -- ast_grep = {
+        --   capabilities = capabilities,
+        -- },
         marksman = {
           capabilities = capabilities,
         },
@@ -652,6 +667,8 @@ require('lazy').setup({
         cmake = {
           capabilities = capabilities,
         },
+        -- If compile_commands.json lives in a build directory, you should symlink it to the root of your source tree
+        -- ln -s /path/to/myproject/build/compile_commands.json /path/to/myproject/
         clangd = {
           capabilities = capabilities,
         },
@@ -681,8 +698,18 @@ require('lazy').setup({
         'stylua', -- Used to format Lua code
         'isort', -- Used to format python code
         'black', -- Used to format python code
+        'prettier',
+        'eslint_d',
+        'codelldb',
+        'clang-format',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      require('java').setup()
+
+      require('lspconfig').jdtls.setup {
+        log_level = vim.log.levels.DEBUG,
+      }
 
       require('mason-lspconfig').setup {
         handlers = {
@@ -701,7 +728,7 @@ require('lazy').setup({
 
   { -- Autoformat
     'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
+    event = { 'BufWritePre', 'BufNewFile' },
     cmd = { 'ConformInfo' },
     keys = {
       {
@@ -714,12 +741,16 @@ require('lazy').setup({
       },
     },
     opts = {
-      notify_on_error = false,
+      log_level = vim.log.levels.DEBUG,
+
+      notify_on_error = true,
+
       format_on_save = function(bufnr)
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
         local disable_filetypes = { c = true, cpp = true }
+
         local lsp_format_opt
         if disable_filetypes[vim.bo[bufnr].filetype] then
           lsp_format_opt = 'never'
@@ -731,19 +762,45 @@ require('lazy').setup({
           lsp_format = lsp_format_opt,
         }
       end,
+
       formatters_by_ft = {
+        -- You can use 'stop_after_first' to run the first available formatter from the list
+        -- .prettierrc
+        javascript = { 'prettier' },
+        typescript = { 'prettier' },
+        javascriptreact = { 'prettier' },
+        typescriptreact = { 'prettier' },
+        svelte = { 'prettier' },
+        css = { 'prettier' },
+        html = { 'prettier' },
+        json = { 'prettier' },
+        yaml = { 'prettier' },
+        markdown = { 'prettier' },
+        graphql = { 'prettier' },
+        -- .stylua.toml
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
+        sh = { 'shfmt' },
+        cmake = { 'cmake-format' },
         python = { 'isort', 'black' },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        go = { 'goimports', 'gofumpt' },
+        c = { 'clang-format' },
+        cpp = { 'clang-format' },
+        java = { 'google-java-format' },
+      },
+      formatters = {
 
-        c = { 'astyle', 'codespell', stop_after_first = true },
+        clang_format = {
 
-        java = { 'astyle', 'codespell', stop_after_first = true },
+          command = 'clang-format',
 
-        --markdown = { 'astyle', 'codespell', stop_after_first = true },
+          --prepend_args = { '--style=file', '--fallback-style=LLVM' },
+          --prepend_args = { '--style=file', '--fallback-style=Google' },
+          prepend_args = { '--style=file', '--fallback-style=Microsoft' },
+        },
+        shfmt = {
+          prepend_args = { '-i', '4' },
+        },
       },
     },
   },
@@ -875,12 +932,29 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      -- vim.cmd.colorscheme 'tokyonight-night'
 
       -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
+      -- vim.cmd.hi 'Comment gui=none'
     end,
   },
+
+  -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
+  -- init.lua. If you want these files, they are in the repository, so you can just download them and
+  -- place them in the correct locations.
+
+  -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
+  --
+  --  Here are some example plugins that I've included in the Kickstart repository.
+  --  Uncomment any of the lines below to enable them (you will need to restart nvim).
+  --
+  require 'kickstart.plugins.debug',
+  -- require 'kickstart.plugins.indent_line',
+  -- open lint brings many error warnings, not consistent with LSP
+  -- require 'kickstart.plugins.lint',
+  -- require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -888,6 +962,11 @@ require('lazy').setup({
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
+      --require('mini.notify').setup()
+      --require('mini.icons').setup()
+      --require('mini.git').setup()
+      require('mini.diff').setup()
+
       -- Better Around/Inside textobjects
       --
       -- Examples:
@@ -903,12 +982,13 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
+      -- require('mini.statusline').setup()
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
       local statusline = require 'mini.statusline'
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      statusline.setup { use_icons = vim.g.have_nerd_font, log_level = vim.log.levels.DEBUG }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
@@ -917,8 +997,6 @@ require('lazy').setup({
       statusline.section_location = function()
         return '%2l:%-2v'
       end
-
-      -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
@@ -928,7 +1006,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python', 'java' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -947,22 +1025,6 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
-
-  -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
-  -- init.lua. If you want these files, they are in the repository, so you can just download them and
-  -- place them in the correct locations.
-
-  -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
-  --
-  --  Here are some example plugins that I've included in the Kickstart repository.
-  --  Uncomment any of the lines below to enable them (you will need to restart nvim).
-  --
-  require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
