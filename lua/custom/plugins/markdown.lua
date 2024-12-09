@@ -1,9 +1,15 @@
 return {
   {
+    'godlygeek/tabular',
     'preservim/vim-markdown',
     config = function()
       -- special map config for markdown
     end,
+  },
+  {
+    'ellisonleao/glow.nvim',
+    config = true,
+    cmd = 'Glow',
   },
   {
     'junegunn/goyo.vim',
@@ -30,6 +36,15 @@ return {
     end,
   },
   {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' }, -- if you use the mini.nvim suite
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+    ---@module 'render-markdown'
+    ---@type render.md.UserConfig
+    opts = {},
+  },
+  {
     -- install with yarn or npm
     'iamcco/markdown-preview.nvim',
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
@@ -48,7 +63,8 @@ return {
       vim.g.mkdp_page_title = '[${name}]'
       vim.g.mkdp_combine_preview = 1
       vim.g.mkdp_combine_preview_auto_refresh = 1
-      vim.keymap.set('n', '<C-\\>', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview' })
+      vim.keymap.set('n', '<C-\\>', ':Glow<CR>', { desc = 'Markdown Preview within Nvim' })
+      vim.keymap.set('n', '\\b', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview with Browser' })
     end,
   },
 }
