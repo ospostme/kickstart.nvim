@@ -6,11 +6,7 @@ return {
       -- special map config for markdown
     end,
   },
-  {
-    'ellisonleao/glow.nvim',
-    config = true,
-    cmd = 'Glow',
-  },
+  { 'ellisonleao/glow.nvim', config = true, cmd = 'Glow' },
   {
     'junegunn/goyo.vim',
     config = function()
@@ -64,7 +60,7 @@ return {
       vim.g.mkdp_combine_preview = 1
       vim.g.mkdp_combine_preview_auto_refresh = 1
       vim.keymap.set('n', '<C-\\>', ':Glow<CR>', { desc = 'Markdown Preview within Nvim' })
-      vim.keymap.set('n', '\\b', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview with Browser' })
+      vim.keymap.set('n', '\\b', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview with [B]rowser' })
     end,
   },
 }

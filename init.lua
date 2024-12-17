@@ -840,6 +840,12 @@ require('lazy').setup({
       --  into multiple repos for maintenance purposes.
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-cmdline',
+      'uga-rosa/cmp-dictionary',
+      'f3fora/cmp-spell',
+      'linrongbin16/gentags.nvim',
+      'quangnguyen30192/cmp-nvim-tags',
     },
     config = function()
       -- See `:help cmp`
@@ -916,8 +922,87 @@ require('lazy').setup({
           { name = 'nvim_lsp' },
           { name = 'luasnip' },
           { name = 'path' },
+          {
+            name = 'dictionary',
+            keyword_length = 2,
+          },
+          {
+            name = 'spell',
+            option = {
+              keep_all_entries = false,
+              enable_in_context = function()
+                return true
+              end,
+              preselect_correct_word = true,
+            },
+          },
+          {
+            name = 'buffer',
+            option = {
+              get_bufnrs = function()
+                return vim.api.nvim_list_bufs()
+              end,
+            },
+          },
+          {
+            name = 'tags',
+            option = {
+              -- this is the default options, change them if you want.
+              -- Delayed time after user input, in milliseconds.
+              complete_defer = 100,
+              -- Max items when searching `taglist`.
+              max_items = 10,
+              -- The number of characters that need to be typed to trigger
+              -- auto-completion.
+              keyword_length = 3,
+              -- Use exact word match when searching `taglist`, for better searching
+              -- performance.
+              exact_match = false,
+              -- Prioritize searching result for current buffer.
+              current_buffer_only = false,
+            },
+          },
         },
       }
+
+      -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+      cmp.setup.cmdline({ '/', '?' }, {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = {
+          { name = 'buffer' },
+        },
+      })
+
+      -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+      --cmp.setup.cmdline(':', {
+      --  mapping = cmp.mapping.preset.cmdline(),
+      --  sources = cmp.config.sources({
+      --    { name = 'path' },
+      --  }, {
+      --    { name = 'cmdline' },
+      --  }),
+      --  matching = { disallow_symbol_nonprefix_matching = false },
+      --})
+
+      require('cmp_dictionary').setup {
+        paths = { '/usr/share/dict/words' },
+        exact_length = 2,
+      }
+      vim.opt.spell = true
+      vim.opt.spelllang = { 'en_us' }
+
+      require('gentags').setup()
+
+      -- Occasionally, due to potential execution order issues: you might set tagfunc
+      -- to nil, but the LSP could re-register it later. So that you may need a
+      -- "brute force way" to ask neovim will always fallback to the default tag
+      -- search method immediately.
+      --TAGFUNC_ALWAYS_EMPTY = function()
+      --  return vim.NIL
+      --end
+
+      -- if tagfunc is already registered, nvim lsp will not try to set tagfunc as vim.lsp.tagfunc.
+      -- vim.o.tagfunc = 'v:lua.TAGFUNC_ALWAYS_EMPTY'
     end,
   },
 
@@ -952,9 +1037,9 @@ require('lazy').setup({
   -- require 'kickstart.plugins.indent_line',
   -- open lint brings many error warnings, not consistent with LSP
   -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -1006,22 +1091,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = {
-        'bash',
-        'c',
-        'diff',
-        'html',
-        'lua',
-        'luadoc',
-        'markdown',
-        'markdown_inline',
-        'query',
-        'vim',
-        'vimdoc',
-        'python',
-        'java',
-        'html',
-      },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python', 'java' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {

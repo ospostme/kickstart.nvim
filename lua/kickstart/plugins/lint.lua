@@ -1,5 +1,4 @@
 return {
-
   { -- Linting
     'mfussenegger/nvim-lint',
     event = { 'BufReadPre', 'BufNewFile' },
@@ -32,7 +31,7 @@ return {
       }
 
       lint.linters.gcc = {
-        cmd = '/usr/local/bin/gcc',
+        cmd = '/usr/bin/gcc',
         stdin = false,
         -- or false if it doesn't support content input via stdin.
         -- In that case the filename is automatically added to
