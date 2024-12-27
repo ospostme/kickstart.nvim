@@ -1,5 +1,4 @@
 --[[
-
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
 =====================================================================
@@ -19,6 +18,7 @@
 ========                                                     ========
 =====================================================================
 =====================================================================
+
 
 What is Kickstart?
 
@@ -44,7 +44,6 @@ What is Kickstart?
 Kickstart Guide:
 
   TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
     If you don't know what this means, type the following:
       - <escape key>
       - :
@@ -79,7 +78,6 @@ Kickstart Guide:
 If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
 
 I hope you enjoy your Neovim journey,
-- TJ
 
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
@@ -269,7 +267,7 @@ require('lazy').setup({
   --
   -- Then, because we use the `config` key, the configuration only runs
   -- after the plugin has been loaded:
-  --  config = function() ... end
+  --  config = function() ...end
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
@@ -379,7 +377,7 @@ require('lazy').setup({
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
+        -- You can put your default mappings / updates / etc.in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
         -- defaults = {
@@ -626,7 +624,7 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+        -- ... See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
         --    https://github.com/pmizio/typescript-tools.nvim
@@ -842,15 +840,19 @@ require('lazy').setup({
       'hrsh7th/cmp-path',
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-cmdline',
+      'nvim-lua/plenary.nvim',
       'uga-rosa/cmp-dictionary',
       'f3fora/cmp-spell',
+      'onsails/lspkind.nvim',
       'linrongbin16/gentags.nvim',
       'quangnguyen30192/cmp-nvim-tags',
+      'lukas-reineke/cmp-rg',
     },
     config = function()
       -- See `:help cmp`
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
+      local lspkind = require 'lspkind'
       luasnip.config.setup {}
 
       cmp.setup {
@@ -889,7 +891,7 @@ require('lazy').setup({
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
           --  completions whenever it has completion options available.
-          ['<C-Space>'] = cmp.mapping.complete {},
+          ['<C-g'] = cmp.mapping.complete {},
 
           -- Think of <c-l> as moving to the right of your snippet expansion.
           --  So if you have a snippet that's like:
@@ -910,7 +912,7 @@ require('lazy').setup({
             end
           end, { 'i', 's' }),
 
-          -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
+          -- For more advanced Luasnip keymaps  see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
@@ -919,25 +921,28 @@ require('lazy').setup({
             -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
             group_index = 0,
           },
-          { name = 'nvim_lsp' },
+          { name = 'nvim_lsp', max_item_count = 6 },
           { name = 'luasnip' },
-          { name = 'path' },
+          { name = 'path', max_item_count = 5 },
           {
             name = 'dictionary',
             keyword_length = 2,
+            max_item_count = 5,
           },
           {
             name = 'spell',
+            max_item_count = 5,
             option = {
               keep_all_entries = false,
               enable_in_context = function()
-                return true
+                return require('cmp.config.context').in_treesitter_capture 'spell'
               end,
               preselect_correct_word = true,
             },
           },
           {
             name = 'buffer',
+            max_item_count = 5,
             option = {
               get_bufnrs = function()
                 return vim.api.nvim_list_bufs()
@@ -946,12 +951,14 @@ require('lazy').setup({
           },
           {
             name = 'tags',
+            max_item_count = 5,
             option = {
               -- this is the default options, change them if you want.
               -- Delayed time after user input, in milliseconds.
               complete_defer = 100,
               -- Max items when searching `taglist`.
-              max_items = 10,
+              max_items = 5,
+
               -- The number of characters that need to be typed to trigger
               -- auto-completion.
               keyword_length = 3,
@@ -962,31 +969,60 @@ require('lazy').setup({
               current_buffer_only = false,
             },
           },
+          {
+            name = 'rg',
+            -- Try it when you feel cmp performance is poor
+            keyword_length = 3,
+            max_item_count = 3,
+          },
+        },
+
+        formatting = {
+          format = lspkind.cmp_format {
+            -- mode = 'symbol', -- show only symbol annotations
+            maxwidth = {
+              -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
+              -- can also be a function to dynamically calculate max width such as
+              -- menu = function() return math.floor(0.45 * vim.o.columns) end,
+              menu = 50, -- leading text (labelDetails)
+              abbr = 50, -- actual suggestion item
+            },
+            ellipsis_char = '...', -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead (must define maxwidth first)
+            show_labelDetails = true, -- show labelDetails in menu. Disabled by default
+
+            -- The function below will be called before any actual modifications from lspkind
+            -- so that you can provide more controls on popup customization. (See [#30](https://github.com/onsails/lspkind-nvim/pull/30))
+            before = function(entry, vim_item)
+              -- Source
+              vim_item.menu = '[' .. string.upper(entry.source.name) .. ']'
+              return vim_item
+            end,
+          },
         },
       }
-
       -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
       cmp.setup.cmdline({ '/', '?' }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = {
-          { name = 'buffer' },
+          { name = 'buffer', max_item_count = 5 },
         },
       })
 
       -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-      --cmp.setup.cmdline(':', {
-      --  mapping = cmp.mapping.preset.cmdline(),
-      --  sources = cmp.config.sources({
-      --    { name = 'path' },
-      --  }, {
-      --    { name = 'cmdline' },
-      --  }),
-      --  matching = { disallow_symbol_nonprefix_matching = false },
-      --})
+      cmp.setup.cmdline(':', {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = cmp.config.sources({
+          { name = 'path', max_item_count = 5 },
+        }, {
+          { name = 'cmdline', max_item_count = 5 },
+        }),
+        matching = { disallow_symbol_nonprefix_matching = false },
+      })
 
       require('cmp_dictionary').setup {
         paths = { '/usr/share/dict/words' },
         exact_length = 2,
+        first_case_insensitive = true,
       }
       vim.opt.spell = true
       vim.opt.spelllang = { 'en_us' }
