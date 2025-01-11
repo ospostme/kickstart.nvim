@@ -23,6 +23,9 @@ end
 return {
   'jbyuki/venn.nvim',
   config = function()
-    vim.api.nvim_set_keymap('n', '<leader>v', ':lua Toggle_venn()<CR>', { noremap = true })
+    -- vim.api.nvim_set_keymap('n', '<leader>v', ':lua Toggle_venn()<CR>', { noremap = true })
+    vim.keymap.set('n', '<leader>v', function()
+      Toggle_venn()
+    end, { noremap = true, desc = '[V]isual Drawing' })
   end,
 }

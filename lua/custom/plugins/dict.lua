@@ -4,7 +4,7 @@ return {
   config = function()
     require('dict').setup {
       dict = 'wn',
-      dict_dir = '/usr/local/Cellar/dict/1.13.3/share',
+      dict_dir = '/usr/share/dictd',
     }
     vim.keymap.set('n', '<leader>ld', '<Cmd>lua require("dict").lookup()<CR>', { desc = '[L]ook [D]dictionary' })
     --vim.cmd [[ nmap '<leader>lv' :!python ~/wester_api_v3.py %s/\(<c-r>=expand("<cword>")<cr><cr>\)/ ]]

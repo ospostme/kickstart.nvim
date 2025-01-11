@@ -155,6 +155,37 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- textwidth for auto wrap
+vim.opt.textwidth = 80
+
+-- Show column border
+vim.opt.colorcolumn = '+1'
+
+-- No swap/backup files
+vim.opt.autoread = true
+
+-- width of a tab
+-- vim.opt.tabstop = 4
+
+-- Affects tab and backspace keys
+-- number of white spaces with tab and backspace
+vim.opt.softtabstop = 4
+
+-- number of white spaces used for one level of
+-- idenentation in column.
+-- influences various Vim commands and behaviors
+-- formatting commands
+-- cindent
+-- autoindent
+vim.opt.shiftwidth = 4
+
+-- disable automatic conversion of tab spaces
+-- vim.opt.noexpandtab
+
+-- check current buffer format options with
+-- :lua print(vim.bo.formatoptions)
+vim.opt.formatoptions:append ''
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -164,6 +195,26 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+vim.keymap.set('n', '<leader>dd', function()
+  vim.diagnostic.config { virtual_text = false }
+end, { desc = '[D]iagnostic virtual text [D]isable' })
+
+vim.keymap.set('n', '<leader>de', function()
+  vim.diagnostic.config { virtual_text = true }
+end, { desc = '[D]iagnostic virtual text [E]nable' })
+
+vim.keymap.set('n', '<leader>dt', function()
+  vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+end, { desc = '[D]iagnostic [T]oggle' })
+
+-- Maps for quickfix navigation
+vim.keymap.set('n', '<leader>dj', vim.diagnostic.goto_next, { desc = 'Diagnostic list Move Next' })
+vim.keymap.set('n', '<leader>dk', vim.diagnostic.goto_prev, { desc = 'Diagnostic list Move Previous' })
+
+vim.keymap.set('n', 'm', '<C-W>_<C-W>|', { desc = '[M]aximum current window size' })
+vim.keymap.set('n', 'b', '<C-W>=', { desc = '[B]ack to window layouts with equal size' })
+vim.keymap.set('n', 'vv', '<C-W>v', { desc = '[V]ertical split window' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -187,6 +238,10 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- Maps for quickfix navigation
+vim.keymap.set('n', '<leader>j', '<cmd>cnext<cr>', { desc = 'Quickfix list Move Next' })
+vim.keymap.set('n', '<leader>k', '<cmd>cprev<cr>', { desc = 'Quickfix list Move Previous' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -466,7 +521,11 @@ require('lazy').setup({
       'hrsh7th/cmp-nvim-lsp',
 
       { 'nvim-java/nvim-java' },
+
+      -- Improved ltex integration, supporting code actions
+      { 'barreiroleo/ltex-extra.nvim' },
     },
+
     config = function()
       -- Brief aside: **What is LSP?**
       --
@@ -561,6 +620,15 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+          if client and client.name == 'ltex' then
+            require('ltex_extra').setup {
+              load_langs = { 'en-US' }, -- languages for witch dictionaries will be loaded
+              init_check = true, -- whether to load dictionaries on startup
+              path = vim.fn.stdpath 'config' .. '/spell', -- path to store dictionaries.
+              log_level = 'info', -- "none", "trace", "debug", "info", "warn", "error", "fatal"
+            }
+          end
 
           if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
@@ -675,6 +743,36 @@ require('lazy').setup({
         },
         pyright = {
           capabilities = capabilities,
+        },
+
+        -- use LanguageTool via ltex for spell checking
+        ltex = {
+          filetypes = {
+            'bib',
+            'gitcommit',
+            'latex',
+            'mail',
+            'markdown',
+            'norg',
+            'org',
+            'pandoc',
+            'rst',
+            'text',
+          },
+          settings = {
+            -- https://valentjn.github.io/ltex/settings.html
+            ltex = {
+              language = 'en-US',
+              additionalRules = {
+                enablePickyRules = true,
+                motherTongue = 'en-US',
+              },
+              -- https://community.languagetool.org/rule/list?lang=en
+              disabledRules = {
+                ['en-US'] = { 'TOO_LONG_SENTENCE', 'DASH_RULE' },
+              },
+            },
+          },
         },
       }
 

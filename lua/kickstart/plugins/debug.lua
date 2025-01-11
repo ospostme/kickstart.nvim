@@ -41,9 +41,9 @@ return {
       { '\\g', dap.step_into, desc = 'Debug: Step Into/[G]o Into' },
       { '\\v', dap.step_over, desc = 'Debug: Step [O]ver' },
       { '\\w', dap.step_out, desc = 'Debug: Step Out/[W]alk out' },
-      { '<leader>b', dap.toggle_breakpoint, desc = 'Debug: Toggle [b]reakpoint' },
+      { '\\b', dap.toggle_breakpoint, desc = 'Debug: Toggle [b]reakpoint' },
       {
-        '<leader>B',
+        '\\B',
         function()
           dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
         end,
